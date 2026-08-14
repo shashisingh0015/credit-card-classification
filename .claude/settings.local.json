@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"c:/Users/sbsin/OneDrive/Documents/MyLearning-Shashi/BITS/ML\" && find . -iname \"*fraud*\" -o -iname \"*.csv\" 2>/dev/null | head -40)",
+      "Read(//c/Users/sbsin/OneDrive/Documents/MyLearning-Shashi/BITS/ML/**)",
+      "Bash(ls -la \"c:/Users/sbsin/Downloads\" 2>/dev/null | grep -i -E \"fraud|csv\" | head -20; echo \"---DESKTOP---\"; ls \"c:/Users/sbsin/Desktop\" 2>/dev/null | head -20)",
+      "Read(//c/Users/sbsin/Downloads/**)",
+      "Read(//c/Users/sbsin/**)",
+      "Bash(awk -F',' 'NR>1{f[$10]++; g[$11]++; t[$2]++} END{print \"isFraud:\"; for\\(k in f\\) print \"  \"k\": \"f[k]; print \"isFlaggedFraud:\"; for\\(k in g\\) print \"  \"k\": \"g[k]; print \"type:\"; for\\(k in t\\) print \"  \"k\": \"t[k]}' card_fraud.csv)",
+      "Bash(python -c \"import sklearn, pandas, numpy, streamlit; print\\('sklearn', sklearn.__version__\\); print\\('pandas', pandas.__version__\\); print\\('numpy', numpy.__version__\\); print\\('streamlit', streamlit.__version__\\)\")",
+      "Bash(git --version)",
+      "Bash(gh --version)",
+      "Bash(python -m venv .venv)",
+      "Bash(./.venv/Scripts/python.exe -m pip install --quiet --upgrade pip)",
+      "Bash(./.venv/Scripts/python.exe -m pip install --quiet scikit-learn pandas numpy streamlit matplotlib seaborn joblib ucimlrepo)",
+      "Bash(./.venv/Scripts/python.exe -c \"import sklearn,pandas,numpy,streamlit,matplotlib,seaborn,joblib; print\\('sklearn',sklearn.__version__\\); print\\('pandas',pandas.__version__\\); print\\('numpy',numpy.__version__\\); print\\('streamlit',streamlit.__version__\\); print\\('matplotlib',matplotlib.__version__\\); print\\('seaborn',seaborn.__version__\\)\")",
+      "Bash(./.venv/Scripts/python.exe -c ' *)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}

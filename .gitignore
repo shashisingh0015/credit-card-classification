@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Raw / large data — only test_data.csv is committed (assignment requirement)
+data/raw/
+*.csv
+!test_data.csv
+
+# Large model artifacts (keep small ones; see CLAUDE.md)
+*.pkl
+
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
