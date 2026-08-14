@@ -1,0 +1,23 @@
+# Development-only dependencies: tests, linting, notebook execution.
+#
+# Deliberately kept OUT of requirements.txt. Streamlit Community Cloud installs
+# from that file, and every extra package there is another chance for the deploy
+# to fail on a resolver conflict. app.py needs none of these at runtime.
+#
+#   .\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
+
+-r requirements.txt
+
+pytest==9.1.1
+ruff==0.16.3
+
+# Headless notebook execution for model/eda.ipynb.
+#
+# Do NOT `pip install jupyter` on this machine: the metapackage pulls JupyterLab
+# extensions whose nested paths exceed the Windows path limit under this OneDrive
+# directory, and the install fails partway through. These four are sufficient to
+# execute a notebook and write back its outputs.
+nbformat==5.11.0
+nbclient==0.11.0
+nbconvert==7.17.1
+ipykernel==7.3.0
