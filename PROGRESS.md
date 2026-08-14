@@ -15,7 +15,7 @@ counterpart to `CLAUDE.md` (which holds only stable facts).
 
 - [x] **M0 — Foundation & session persistence**
 - [x] **M1 — Data layer & EDA**
-- [ ] **M2 — Baselines: Logistic Regression, Decision Tree, Naive Bayes**
+- [x] **M2 — Baselines: Logistic Regression, Decision Tree, Naive Bayes**
 - [ ] **M3 — kNN, Random Forest, Gradient Boosting**
 - [ ] **M4 — Evaluation harness & comparison table**
 - [ ] **M5 — Streamlit app**
@@ -115,9 +115,59 @@ narrative and `CLAUDE.md` all now state the threshold structure instead.
 - `\n` escapes inside notebook cell source collapse to real newlines across a
   write/execute/re-read cycle, breaking f-strings. Use a bare `print()`.
 
+---
+
+## Session 3 — 2026-08-15 (M2)
+
+**Built**
+- `model/models.py` — pipeline factory per model plus a `MODEL_BUILDERS` registry
+  keyed by display name (those keys become the comparison-table rows and the
+  Streamlit dropdown labels). M3 extends the same registry.
+- `model/train.py` — fits every registered model, persists to
+  `model/artifacts/*.joblib` (`compress=3`), prints sanity metrics.
+- `.claude/commands/train.md` — the `/train` slash command.
+- `.claude/hooks/format_python.py` + `.claude/settings.json` — PostToolUse hook
+  running `ruff format` + `ruff check --fix` on edited `.py` files.
+- `ruff` added to the venv. Whole codebase now lints clean.
+
+**Results on the 5,993-row test set** (all-negative baseline = 77.87% accuracy)
+
+| model | accuracy | AUC | F1 | MCC |
+|---|---|---|---|---|
+| Logistic Regression | 0.8136 | 0.7185 | 0.3749 | 0.3515 |
+| Decision Tree | 0.8188 | **0.7447** | **0.4504** | **0.3893** |
+| Naive Bayes (Gaussian) | 0.5750 | 0.7300 | 0.4430 | 0.2377 |
+
+**Both M1 predictions confirmed**
+1. **Logistic Regression trails the Decision Tree** — AUC 0.7185 vs 0.7447,
+   MCC 0.3515 vs 0.3893. Predicted in M1 from the non-monotonic `PAY_0` structure:
+   one linear coefficient cannot express the −2/−1/0 inversion.
+2. **Naive Bayes is a bad classifier but a decent ranker** — accuracy 0.5750 sits
+   *below* the do-nothing baseline and MCC is the worst of the three, yet its AUC
+   (0.7300) **beats Logistic Regression's** (0.7185). Violating conditional
+   independence (`BILL_AMT*` correlate 0.80–0.95) wrecks probability calibration
+   but largely preserves score *ordering*. Best single illustration in the project
+   of why accuracy alone is worthless here.
+
+**Also measured — the overfitting demo** (now documented in `models.py`)
+
+| tree | train acc | test acc | test MCC | leaves |
+|---|---|---|---|---|
+| unconstrained | 0.9995 | 0.7220 | 0.2126 | 3810 |
+| `max_depth=5, min_samples_leaf=50` | 0.8235 | 0.8188 | 0.3893 | 26 |
+
+The unconstrained tree memorises training data and then scores *below* baseline on
+test. Its root split is on `PAY_0` — exactly what M1's correlation analysis predicted.
+
+**Open item — the hook needs a config reload.** It is written, pipe-tested against
+5 payload shapes, and schema-validated, but it did **not** fire when triggered this
+session: Claude Code only watches `.claude/` for settings files that existed at
+session start, and `.claude/settings.json` was created mid-session. Open `/hooks`
+once, or restart Claude Code, and it will load. Not a code defect.
+
 **Next session — start here**
-**M2.** Build `model/models.py`: Logistic Regression, Decision Tree and Gaussian
-Naive Bayes pipelines on top of `build_preprocessor()`. Decisions already locked:
-default class weights (fair 6-way comparison), light hand-picked hyperparameters.
-Claude Code features to learn in M2: **custom slash commands**
-(`.claude/commands/train.md`) and **hooks** (`.claude/settings.json`).
+**M3.** Add kNN, Random Forest and Gradient Boosting to `MODEL_BUILDERS` in
+`model/models.py`; everything else is already wired. Watch artifact sizes — Random
+Forest with many trees can produce large joblib files, and they are committed.
+Concepts to cover: curse of dimensionality (why kNN needs the scaler), and
+bagging (variance reduction) vs boosting (bias reduction).

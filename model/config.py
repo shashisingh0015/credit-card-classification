@@ -33,11 +33,11 @@ TARGET = "default_next_month"
 # The real names live only in the metadata, so we rename on load.
 # --------------------------------------------------------------------------
 RENAME_MAP = {
-    "X1": "LIMIT_BAL",   # credit limit, NT dollars
-    "X2": "SEX",         # 1 = male, 2 = female
-    "X3": "EDUCATION",   # 1 = grad school, 2 = university, 3 = high school, 4 = others
-    "X4": "MARRIAGE",    # 1 = married, 2 = single, 3 = others
-    "X5": "AGE",         # years
+    "X1": "LIMIT_BAL",  # credit limit, NT dollars
+    "X2": "SEX",  # 1 = male, 2 = female
+    "X3": "EDUCATION",  # 1 = grad school, 2 = university, 3 = high school, 4 = others
+    "X4": "MARRIAGE",  # 1 = married, 2 = single, 3 = others
+    "X5": "AGE",  # years
     # Repayment status. Note there is no PAY_1 -- that gap is upstream naming,
     # not a mistake here. PAY_0 is the most recent month (September 2005),
     # PAY_6 the oldest (April 2005).

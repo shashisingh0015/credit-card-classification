@@ -70,9 +70,17 @@ Windows, PowerShell. Python 3.13.14 in a local venv (`.venv/`, git-ignored).
 
 ```powershell
 .\.venv\Scripts\python.exe -m model.data_prep   # regenerate train.csv + test_data.csv
+.\.venv\Scripts\python.exe -m model.train       # fit all models -> model/artifacts/
 .\.venv\Scripts\python.exe -m pytest tests -q   # contract tests (13)
+.\.venv\Scripts\ruff.exe check model tests      # lint
 .\.venv\Scripts\streamlit.exe run app.py        # run app locally (M5)
 ```
+
+`/train` is a project slash command (`.claude/commands/train.md`) that wraps the
+training run and flags suspicious metrics. A PostToolUse hook
+(`.claude/hooks/format_python.py`) runs ruff on any `.py` file after an edit.
+Note `jq` is **not** installed on this machine, so hook payloads are parsed with
+Python rather than the usual `jq` one-liner.
 
 Always invoke `.\.venv\Scripts\python.exe` explicitly — the system `python` has
 none of the ML packages installed.

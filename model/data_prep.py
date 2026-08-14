@@ -96,7 +96,7 @@ def _summarise(name: str, df: pd.DataFrame) -> None:
 
 
 def main() -> None:
-    print("Fetching UCI dataset id=%d ..." % config.UCI_DATASET_ID)
+    print(f"Fetching UCI dataset id={config.UCI_DATASET_ID} ...")
     raw = load_raw()
     print(f"  raw shape: {raw.shape}")
 
