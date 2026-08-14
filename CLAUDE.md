@@ -50,22 +50,44 @@ Satisfies the assignment minimums: 23 features (≥12), 30,000 instances (≥500
 
 Note `PAY_0` — there is no `PAY_1`. That is upstream naming, not a bug.
 
-Semantics worth remembering: `PAY_*` are repayment-status codes (−1 = paid duly,
-1..9 = months of delay), so they are **ordinal, not continuous**. `EDUCATION` and
-`MARRIAGE` contain undocumented codes (0, 5, 6) that need explicit handling.
+Semantics worth remembering: `PAY_*` are repayment-status codes. UCI documents only
+−1 (paid duly) and 1..9 (months late), but the data also holds **−2 (no credit
+used) and 0 (revolving)** — and `0` is the most common value at ~49% of rows.
+`EDUCATION` {0,5,6} and `MARRIAGE` {0} are likewise undocumented; both are folded
+into each column's "others" bucket.
+
+**Measured in M1 — `PAY_0` risk is NOT monotonic in the code.** Default rate by
+code: −2 → 13.2%, −1 → 17.0%, 0 → 12.6%, 1 → 34.2%, 2 → 69.3%, 3 → 77.2%,
+4 → 69.4%. The real structure is a *threshold* at `PAY_0 >= 1`: not-late 13.8% vs
+late 50.5%, a 3.7× risk ratio. Kept ordinal anyway (one tree split captures the
+threshold; one-hot would add ~66 columns and hurt kNN), but this predicts
+**Logistic Regression will trail the tree models**, since a single coefficient
+cannot represent the −2/−1/0 inversion. M4 should confirm or refute that.
 
 ## Environment
 
 Windows, PowerShell. Python 3.13.14 in a local venv (`.venv/`, git-ignored).
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest        # tests
-.\.venv\Scripts\python.exe model\train.py   # retrain all models
-.\.venv\Scripts\streamlit.exe run app.py    # run app locally
+.\.venv\Scripts\python.exe -m model.data_prep   # regenerate train.csv + test_data.csv
+.\.venv\Scripts\python.exe -m pytest tests -q   # contract tests (13)
+.\.venv\Scripts\streamlit.exe run app.py        # run app locally (M5)
 ```
 
 Always invoke `.\.venv\Scripts\python.exe` explicitly — the system `python` has
 none of the ML packages installed.
+
+`model/` is a package, so run its scripts with `-m` (`python -m model.data_prep`),
+not by path — the relative imports fail otherwise.
+
+**Do not `pip install jupyter`.** The metapackage's JupyterLab extension paths
+exceed the Windows path limit under this OneDrive directory and the install fails
+partway. `nbformat`, `nbclient`, `nbconvert` and `ipykernel` are installed instead,
+which is enough to execute notebooks headlessly.
+
+Notebook `source` strings do not survive `\n` escapes through a
+write/execute/re-read round-trip — they collapse into real newlines and break
+f-strings. Use a bare `print()` for blank lines inside notebook code.
 
 ## Decisions already made
 
