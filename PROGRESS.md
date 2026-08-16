@@ -13,8 +13,10 @@ counterpart to `CLAUDE.md` (which holds only stable facts).
 
 ## Where we are — as of 2026-08-17
 
-**M0 through M5 are complete.** Next up is **M6**: CI/CD (`.github/workflows/`)
-and deploying `app.py` to Streamlit Community Cloud.
+**M0 through M5 are complete. M6 is half done:** `.github/workflows/ci.yml` is
+built, verified locally, and pushed. **Streamlit Community Cloud deployment is
+still pending** — that step needs the user's Streamlit account; see Blocked
+below.
 
 `app.py` is built and driven end-to-end (see Session 6) — CSV upload, model
 dropdown, metrics panel, confusion matrix, classification report. All 4 Streamlit
@@ -72,7 +74,7 @@ If it does not, something changed — investigate before continuing:
 - [x] **M3 — kNN, Random Forest, Gradient Boosting**
 - [x] **M4 — Evaluation harness & comparison table**
 - [x] **M5 — Streamlit app**
-- [ ] **M6 — CI/CD & deployment**
+- [~] **M6 — CI/CD (done) & Streamlit Cloud deployment (blocked on user)**
 - [ ] **M7 — Submission package (README + PDF + Lab screenshot)**
 
 ## Blocked / needs the user
@@ -82,8 +84,8 @@ If it does not, something changed — investigate before continuing:
       GitHub; local `origin` updated via `git remote set-url`, reachability
       confirmed with `git ls-remote` before switching). Remote:
       https://github.com/shashisingh0015/credit-default-classification
-      `main` tracks `origin/main`, but local `main` is currently **3 commits
-      ahead of origin** (M3, M4, M5 — not yet pushed under either name).
+      `main` tracks `origin/main`. M3–M5 and the rename note were pushed
+      2026-08-17; the M6 CI commit is local-only until pushed (see Session 7).
 - [x] **BITS Virtual Lab access** — user confirmed access and will run the final
       app there to capture the M7 screenshot.
 - [x] **Ruff formatting hook — resolved 2026-08-17.** It loaded on the next session
@@ -101,6 +103,17 @@ If it does not, something changed — investigate before continuing:
       `credit-default-classification` before M6 connects it to Streamlit Cloud,
       exactly the sequencing this item recommended. Local `origin` updated to
       match (see the GitHub repo item above).
+- [ ] **Streamlit Community Cloud deployment.** Needs the user's Streamlit
+      account (share.streamlit.io) — no credential Claude has access to.
+      Once `main` (with the M6 CI commit) is pushed:
+      1. Go to share.streamlit.io, sign in, "New app".
+      2. Point it at `shashisingh0015/credit-default-classification`, branch
+         `main`, main file path `app.py`.
+      3. It installs from `requirements.txt` only (not `requirements-dev.txt`
+         — see that file's own comment on why) and needs no secrets/env vars.
+      4. After it deploys, come back so the live URL can go in the M7 README
+         and PDF (the assignment's mandated GitHub-link → Streamlit-link →
+         screenshot → README order).
 
 ## Notes
 
@@ -478,3 +491,67 @@ still-open, non-blocking item below: consider renaming the GitHub repo before
 connecting it to Streamlit Cloud, since reconnecting after the fact is more
 work than renaming now. Run `/code-review` on the diff and `/security-review`
 before making the repo public, per the ROADMAP.
+
+---
+
+## Session 7 — 2026-08-17 (repo rename, M6 CI)
+
+**Repo rename** (separate short session before M6 proper): user renamed the
+GitHub repo to `credit-default-classification`. Verified the new URL was
+reachable with `git ls-remote` (HEAD matched the local M2 commit) before
+running `git remote set-url origin <new-url>`, then pushed the 3 commits that
+had been queued locally since M2 (M3, M4, M5) plus the rename note — `origin`
+and local `main` were back in sync for the first time since M2.
+
+**Built**
+- `.github/workflows/ci.yml` — runs on every push/PR to `main`, on a clean
+  Ubuntu runner (deliberately not Windows, to catch anything that only works
+  on the one machine that's been developing this). Sequence: install deps,
+  lint, refetch the dataset from UCI and diff the regenerated `test_data.csv`
+  against the committed one (fails if the upstream source or `data_prep.py`'s
+  determinism ever drifts), run the 17 tests, retrain all six models, then
+  regenerate `reports/comparison_table.csv` and diff every metric against the
+  committed table with a 0.005 tolerance.
+- Ran the entire sequence locally first, end to end, before trusting it to
+  CI: fresh UCI fetch reproduced `test_data.csv` byte-identically
+  (`git diff --exit-code` passed), all 17 tests passed, retraining reproduced
+  every M3/M4 metric exactly, and the regression-check script reported no
+  drift. This is the same "prove it locally before shipping the automation"
+  approach as M5's `AppTest` runs.
+
+**Process notes**
+- Per the ROADMAP, ran `/code-review` on the diff before committing. It
+  correctly ignored the CI file (nothing to flag) but caught real damage in
+  the *uncommitted* `.claude/settings.json`: several PowerShell permission
+  rules had doubled backslashes (`.\\\\.venv\\\\...` instead of
+  `.\\.venv\\...`) from how they'd been auto-appended across earlier
+  sessions, so they silently never matched anything and kept prompting for
+  approval despite existing specifically to suppress that; and a
+  `Read(//c//**)` grant -- the entire C: drive -- had landed in the shared,
+  git-tracked `settings.json` rather than the per-machine
+  `settings.local.json`. Fixed both and included the fix in the M6 commit.
+- Also ran `/security-review` on the same diff (the ROADMAP calls for it
+  before making the repo public). No findings -- the workflow uses no
+  secrets and never interpolates a GitHub Actions context expression
+  (`${{ ... }}`) into a shell or Python command, so there's no injection
+  surface via a PR title/branch/commit message.
+- `model/eda.ipynb` had picked up incidental kernel-metadata diffs (display
+  name `"Python 3"` -> `"base"`, version `3.13.14` -> `3.13.9`) from being
+  opened in an editor at some point across recent sessions -- no cell content
+  changed. Confirmed with the user this wasn't intentional and reverted it
+  with `git checkout -- model/eda.ipynb` rather than committing environment
+  drift that contradicts the Python version pinned in `CLAUDE.md`.
+
+**Still open**
+- **Streamlit Community Cloud deployment** -- needs the user's account; see
+  the Blocked section above for the exact steps once `main` is pushed.
+- The M6 CI commit itself is **local-only** as of this entry -- push it (and
+  everything after) before relying on the Actions tab to show green.
+
+**Next session — start here**
+Push the M6 commit, then either wait on Streamlit Cloud deployment (user
+action) or move straight to **M7**: `README.md` in the mandated a–e structure,
+BITS Virtual Lab run + screenshot, and assembling the final PDF in the
+required order (GitHub link -> Streamlit link -> screenshot -> README
+content). The Streamlit link can be filled in retroactively once deployment
+finishes, so M7's README/PDF drafting doesn't have to block on it.
