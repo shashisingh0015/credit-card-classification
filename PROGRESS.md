@@ -13,10 +13,10 @@ counterpart to `CLAUDE.md` (which holds only stable facts).
 
 ## Where we are — as of 2026-08-17
 
-**M0 through M5 are complete. M6 is half done:** `.github/workflows/ci.yml` is
-built, verified locally, and pushed. **Streamlit Community Cloud deployment is
-still pending** — that step needs the user's Streamlit account; see Blocked
-below.
+**M0 through M6 are complete.** `.github/workflows/ci.yml` is built, verified
+locally, and pushed. The app is **live on Streamlit Community Cloud:**
+https://credit-default-classification.streamlit.app/ (user-deployed; verified
+responding with HTTP 200). Next up is **M7** — the submission package.
 
 `app.py` is built and driven end-to-end (see Session 6) — CSV upload, model
 dropdown, metrics panel, confusion matrix, classification report. All 4 Streamlit
@@ -74,7 +74,7 @@ If it does not, something changed — investigate before continuing:
 - [x] **M3 — kNN, Random Forest, Gradient Boosting**
 - [x] **M4 — Evaluation harness & comparison table**
 - [x] **M5 — Streamlit app**
-- [~] **M6 — CI/CD (done) & Streamlit Cloud deployment (blocked on user)**
+- [x] **M6 — CI/CD & deployment**
 - [ ] **M7 — Submission package (README + PDF + Lab screenshot)**
 
 ## Blocked / needs the user
@@ -103,17 +103,14 @@ If it does not, something changed — investigate before continuing:
       `credit-default-classification` before M6 connects it to Streamlit Cloud,
       exactly the sequencing this item recommended. Local `origin` updated to
       match (see the GitHub repo item above).
-- [ ] **Streamlit Community Cloud deployment.** Needs the user's Streamlit
-      account (share.streamlit.io) — no credential Claude has access to.
-      Once `main` (with the M6 CI commit) is pushed:
-      1. Go to share.streamlit.io, sign in, "New app".
-      2. Point it at `shashisingh0015/credit-default-classification`, branch
-         `main`, main file path `app.py`.
-      3. It installs from `requirements.txt` only (not `requirements-dev.txt`
-         — see that file's own comment on why) and needs no secrets/env vars.
-      4. After it deploys, come back so the live URL can go in the M7 README
-         and PDF (the assignment's mandated GitHub-link → Streamlit-link →
-         screenshot → README order).
+- [x] **Streamlit Community Cloud deployment — done 2026-08-17.** User deployed
+      `app.py` from `shashisingh0015/credit-default-classification` (`main`).
+      Live at **https://credit-default-classification.streamlit.app/**
+      — verified responding (HTTP 200, serves the Streamlit shell) via curl
+      with a cookie jar (a plain follow-redirects curl loops on Streamlit
+      Cloud's wake-up redirect chain; harmless, just needs cookies to resolve).
+      This URL is needed for M7's README and the mandated PDF order (GitHub
+      link → Streamlit link → screenshot → README content).
 
 ## Notes
 
@@ -542,16 +539,17 @@ and local `main` were back in sync for the first time since M2.
   with `git checkout -- model/eda.ipynb` rather than committing environment
   drift that contradicts the Python version pinned in `CLAUDE.md`.
 
-**Still open**
-- **Streamlit Community Cloud deployment** -- needs the user's account; see
-  the Blocked section above for the exact steps once `main` is pushed.
-- The M6 CI commit itself is **local-only** as of this entry -- push it (and
-  everything after) before relying on the Actions tab to show green.
+**Resolved same day:** the M6 CI commit was pushed, and the user deployed
+`app.py` to Streamlit Community Cloud —
+**https://credit-default-classification.streamlit.app/**, verified responding.
+**M6 is fully complete.**
 
 **Next session — start here**
-Push the M6 commit, then either wait on Streamlit Cloud deployment (user
-action) or move straight to **M7**: `README.md` in the mandated a–e structure,
-BITS Virtual Lab run + screenshot, and assembling the final PDF in the
-required order (GitHub link -> Streamlit link -> screenshot -> README
-content). The Streamlit link can be filled in retroactively once deployment
-finishes, so M7's README/PDF drafting doesn't have to block on it.
+**M7**, the last milestone. `README.md` in the mandated a–e structure (problem
+statement, dataset description, repo link, comparison table, observations
+table + overall winner) -- the comparison table and per-model observations
+already exist in `reports/comparison_table.md` and the Session 5 write-up, so
+this is mostly assembly, not new analysis. Then the BITS Virtual Lab run +
+screenshot (user has confirmed access), and the final PDF in the required
+order: GitHub link -> Streamlit link (now available, see above) -> screenshot
+-> README content.
