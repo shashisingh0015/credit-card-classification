@@ -16,7 +16,13 @@ counterpart to `CLAUDE.md` (which holds only stable facts).
 **M0 through M6 are complete.** `.github/workflows/ci.yml` is built, verified
 locally, and pushed. The app is **live on Streamlit Community Cloud:**
 https://credit-default-classification.streamlit.app/ (user-deployed; verified
-responding with HTTP 200). Next up is **M7** — the submission package.
+responding with HTTP 200).
+
+**M7's `README.md` is written and committed** — the mandated a–e structure
+(problem statement, dataset description, repo link, comparison table,
+observations + overall winner). **The BITS Virtual Lab screenshot and final
+PDF assembly are explicitly excluded from Claude's scope** at the user's
+request (2026-08-17) — those remain the user's to do.
 
 `app.py` is built and driven end-to-end (see Session 6) — CSV upload, model
 dropdown, metrics panel, confusion matrix, classification report. All 4 Streamlit
@@ -75,7 +81,7 @@ If it does not, something changed — investigate before continuing:
 - [x] **M4 — Evaluation harness & comparison table**
 - [x] **M5 — Streamlit app**
 - [x] **M6 — CI/CD & deployment**
-- [ ] **M7 — Submission package (README + PDF + Lab screenshot)**
+- [~] **M7 — README done; BITS Lab screenshot + final PDF explicitly deferred**
 
 ## Blocked / needs the user
 
@@ -553,3 +559,52 @@ this is mostly assembly, not new analysis. Then the BITS Virtual Lab run +
 screenshot (user has confirmed access), and the final PDF in the required
 order: GitHub link -> Streamlit link (now available, see above) -> screenshot
 -> README content.
+
+---
+
+## Session 8 — 2026-08-17 (M7, partial — README only)
+
+**Scope for this session, set by the user:** write `README.md`; explicitly
+**exclude** the BITS Virtual Lab screenshot and final PDF assembly, which
+remain the user's to do.
+
+**Built**
+- `README.md` — the mandated a–e structure:
+  - **(a) Problem statement** — binary classification framed around why
+    accuracy alone is the wrong lens (the 77.87% all-negative baseline).
+  - **(b) Dataset description** — instance/feature counts, class balance, the
+    `X1..X23` rename table, and both EDA findings that shaped later decisions
+    (undocumented `EDUCATION`/`MARRIAGE` codes; `PAY_0`'s non-monotonic risk
+    and the threshold structure at `PAY_0 >= 1`).
+  - **(c) Repo link** — plus a repo-structure tree and the exact local setup
+    commands from `CLAUDE.md`.
+  - **(d) Comparison table** — the 6×6 table from `reports/comparison_table.md`
+    (M4), reproduced verbatim rather than retyped, with a pointer to the CI
+    check that keeps it honest.
+  - **(e) Observations + overall winner** — one grounded paragraph per model
+    (own MCC/AUC, a numeric comparison to at least one other model, and the
+    underlying mechanism), assembled from the findings already on record
+    across Sessions 3-6 rather than freshly re-derived. Named **Random
+    Forest** the overall winner, but stated plainly that it's a near-tie with
+    Gradient Boosting on MCC and that Gradient Boosting actually wins AUC --
+    following the model-report skill's own instruction (M4) to flag
+    disagreements rather than silently pick a winner.
+- Included the live Streamlit URL (https://credit-default-classification.streamlit.app/)
+  at the top of the README alongside the repo link.
+
+**Verified:** every number in the table and in section e's prose was checked
+against `reports/comparison_table.md` and the session logs it was drawn from,
+rather than retyped from memory.
+
+**Deliberately not done this session** (per user instruction, not an
+oversight): BITS Virtual Lab screenshot, and assembling the final submission
+PDF in the mandated order (GitHub link -> Streamlit link -> screenshot ->
+README content). `README.md`'s content is ready to drop into that PDF once the
+screenshot exists.
+
+**Next session — start here**
+Whenever the user is ready to finish M7 themselves (or asks Claude to help
+assemble the PDF once they have the screenshot): the README is stable and
+complete, so the remaining work is purely the BITS Lab run, the screenshot,
+and PDF assembly in the mandated order. Nothing else in the repo is blocking
+submission.
