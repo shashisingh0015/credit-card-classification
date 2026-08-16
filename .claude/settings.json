@@ -3,7 +3,17 @@
   "permissions": {
     "allow": [
       "Bash(./.venv/Scripts/python.exe -m pip list --format=freeze)",
-      "Bash(./.venv/Scripts/python.exe -m pip install --dry-run --quiet -r requirements-dev.txt)"
+      "Bash(./.venv/Scripts/python.exe -m pip install --dry-run --quiet -r requirements-dev.txt)",
+      "PowerShell(.\\.venv\\Scripts\\python.exe -m model.train)",
+      "PowerShell(.\\.venv\\Scripts\\python.exe -m pytest tests -q)",
+      "PowerShell(.\\.venv\\Scripts\\ruff.exe check model tests)",
+      "PowerShell(git add model/models.py model/artifacts PROGRESS.md CLAUDE.md)",
+      "PowerShell(.\\.venv\\Scripts\\python.exe -m model.evaluate)",
+      "Bash(find / -iname \"SKILL.md\" 2>/dev/null | grep -v node_modules | head -20)",
+      "Bash(mkdir -p .claude/skills/model-report)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\sbsin\\OneDrive\\Documents\\MyLearning-Shashi\\BITS\\ML\\Assignment-2\\ML_Assignment_2\\.claude\\skills"
     ]
   },
   "hooks": {

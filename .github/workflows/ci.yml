@@ -1,0 +1,98 @@
+name: CI
+
+# Every push and PR to main re-derives the whole graded pipeline from the raw
+# UCI source on a clean Ubuntu runner -- a different OS from local development
+# (Windows) and a different machine from the one that produced the numbers in
+# PROGRESS.md/README.md. If the table only reproduces on one laptop, it isn't
+# actually reproducible; this is the check that catches that.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check model tests app.py
+
+      - name: Regenerate data from UCI and check it matches the committed test set
+        run: |
+          python -m model.data_prep
+          if ! git diff --exit-code test_data.csv; then
+            echo "::error::test_data.csv drifted from the committed version." \
+                 "Either the UCI source changed upstream, or model/data_prep.py" \
+                 "is no longer deterministic. Investigate before merging --" \
+                 "every metric in the README is only meaningful if this file" \
+                 "is exactly reproducible."
+            exit 1
+          fi
+
+      - name: Run tests
+        run: pytest tests -q
+
+      - name: Retrain all six models
+        run: python -m model.train
+
+      - name: Regenerate the comparison table and check for metric regression
+        env:
+          # abs(old - new) beyond this on any single metric fails the build.
+          # Matches the slack /train already allows by hand (see train.md).
+          TOLERANCE: "0.005"
+        run: |
+          cp reports/comparison_table.csv reports/comparison_table.committed.csv
+          python -m model.evaluate
+          python - <<'PY'
+          import os
+          import sys
+
+          import pandas as pd
+
+          tolerance = float(os.environ["TOLERANCE"])
+          committed = pd.read_csv(
+              "reports/comparison_table.committed.csv", index_col="model"
+          )
+          fresh = pd.read_csv("reports/comparison_table.csv", index_col="model")
+
+          if set(committed.index) != set(fresh.index):
+              print(
+                  "::error::Model set changed. If intentional, regenerate and "
+                  "commit reports/comparison_table.{md,csv} deliberately."
+              )
+              sys.exit(1)
+
+          regressed = False
+          for model in committed.index:
+              for metric in committed.columns:
+                  old, new = committed.loc[model, metric], fresh.loc[model, metric]
+                  if abs(old - new) > tolerance:
+                      print(
+                          f"::error::{model} {metric} moved {old:.4f} -> "
+                          f"{new:.4f} (> {tolerance} tolerance)"
+                      )
+                      regressed = True
+
+          if regressed:
+              print(
+                  "::error::Metric drift exceeds tolerance. If intentional "
+                  "(e.g. a hyperparameter change), regenerate and commit "
+                  "reports/comparison_table.{md,csv} deliberately rather than "
+                  "letting CI silently pass a different table than README.md "
+                  "claims."
+              )
+              sys.exit(1)
+
+          print("No metric regressions detected.")
+          PY
