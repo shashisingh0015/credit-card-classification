@@ -78,8 +78,12 @@ If it does not, something changed — investigate before continuing:
 ## Blocked / needs the user
 
 - [x] **GitHub repo** — created and connected manually by the user (2026-08-15).
-      Remote: https://github.com/shashisingh0015/shashisingh0015-fraud-classification-beta
-      `main` tracks `origin/main`; M0 commits pushed.
+      **Renamed 2026-08-17** to `credit-default-classification` (user renamed on
+      GitHub; local `origin` updated via `git remote set-url`, reachability
+      confirmed with `git ls-remote` before switching). Remote:
+      https://github.com/shashisingh0015/credit-default-classification
+      `main` tracks `origin/main`, but local `main` is currently **3 commits
+      ahead of origin** (M3, M4, M5 — not yet pushed under either name).
 - [x] **BITS Virtual Lab access** — user confirmed access and will run the final
       app there to capture the M7 screenshot.
 - [x] **Ruff formatting hook — resolved 2026-08-17.** It loaded on the next session
@@ -93,14 +97,10 @@ If it does not, something changed — investigate before continuing:
       Unlike the M2 hook (which needed `/hooks` or a restart), skills apparently
       get picked up on some shorter mid-session refresh. Don't assume every
       `.claude/` addition needs a restart — check first.
-- [ ] **Consider renaming the repo** before M6 deploys to Streamlit Cloud. The
-      current name says "fraud-classification-beta", but the project is credit-card
-      *default* prediction (we dropped the fraud dataset). Renaming after the
-      Streamlit app is connected means reconnecting it, so now is cheaper.
-      Suggested: `credit-default-classification`. Purely cosmetic — not blocking.
-      As of 2026-08-15 the rename had **not** been done (`git ls-remote` on the new
-      name returns "Repository not found"). After renaming, run:
-      `git remote set-url origin <new-url>`
+- [x] **Repo renamed — 2026-08-17.** User renamed it on GitHub to
+      `credit-default-classification` before M6 connects it to Streamlit Cloud,
+      exactly the sequencing this item recommended. Local `origin` updated to
+      match (see the GitHub repo item above).
 
 ## Notes
 
