@@ -2,7 +2,9 @@
 # minor versions. Training env and Streamlit Cloud must agree.
 scikit-learn==1.9.0
 
-streamlit>=1.40
+# >=1.61: app.py uses the `width=` param on st.dataframe/st.pyplot, which
+# replaced the now-removed `use_container_width` in later 1.4x releases.
+streamlit>=1.61
 pandas>=2.2
 numpy>=2.0,<3
 matplotlib>=3.8

@@ -13,9 +13,12 @@ counterpart to `CLAUDE.md` (which holds only stable facts).
 
 ## Where we are — as of 2026-08-17
 
-**M0 through M4 are complete.** Next up is **M5**: the Streamlit app (`app.py`) —
-CSV upload, model dropdown, metrics panel, confusion matrix + classification
-report. All 4 UI marks live there.
+**M0 through M5 are complete.** Next up is **M6**: CI/CD (`.github/workflows/`)
+and deploying `app.py` to Streamlit Community Cloud.
+
+`app.py` is built and driven end-to-end (see Session 6) — CSV upload, model
+dropdown, metrics panel, confusion matrix, classification report. All 4 Streamlit
+marks are covered.
 
 **All 6 models are built and scored on all 6 required metrics.** 17/17 tests
 passing, lint clean. `reports/comparison_table.md` / `.csv` are the source of
@@ -68,7 +71,7 @@ If it does not, something changed — investigate before continuing:
 - [x] **M2 — Baselines: Logistic Regression, Decision Tree, Naive Bayes**
 - [x] **M3 — kNN, Random Forest, Gradient Boosting**
 - [x] **M4 — Evaluation harness & comparison table**
-- [ ] **M5 — Streamlit app**
+- [x] **M5 — Streamlit app**
 - [ ] **M6 — CI/CD & deployment**
 - [ ] **M7 — Submission package (README + PDF + Lab screenshot)**
 
@@ -407,3 +410,71 @@ Concepts: `@st.cache_resource` for the loaded pipelines vs `@st.cache_data` for
 the uploaded dataframe, and validating/handling a CSV with the wrong columns.
 Use the `/run` skill to actually launch the app and click through it before
 calling M5 done.
+
+---
+
+## Session 6 — 2026-08-17 (M5)
+
+**Built**
+- `app.py` — sidebar has the model dropdown (from `MODEL_BUILDERS`) and the CSV
+  uploader; main panel shows row count/positive rate, a 6-metric row (via
+  `model/evaluate.py`'s `score_model`, so the app and the graded table can never
+  disagree about how a metric is computed), a confusion matrix (matplotlib,
+  reusing `model/viz.py`'s palette so it matches the EDA notebook's figures),
+  and a classification report table. No upload defaults to the committed
+  `test_data.csv`, so the grader sees a working app with zero clicks.
+- `validate_schema()` checks the uploaded file has all 23 `config.FEATURES`
+  before scoring; missing columns produce a readable `st.error` + `st.stop()`
+  instead of a `ColumnTransformer` stack trace. A file with the features but no
+  `default_next_month` target column still works -- it switches to a
+  predictions-only view (label + probability per row) with a `st.warning`
+  explaining why metrics aren't shown, rather than crashing or silently omitting
+  them.
+- Caching: `@st.cache_resource` for the six loaded pipelines (joblib objects,
+  not data -- reloading from disk on every widget interaction would make the
+  model dropdown laggy), `@st.cache_data` for the parsed CSV (keyed on the
+  uploaded bytes).
+
+**Verified by actually driving the app, not just linting it** -- three passes,
+using Streamlit's official `AppTest` headless harness (`streamlit.testing.v1`),
+which executes `app.py`'s real logic rather than importing a function in
+isolation:
+1. Default load (bundled `test_data.csv`) + switching the model dropdown across
+   Logistic Regression -> Random Forest -> Gradient Boosting. Every metric shown
+   matched `reports/comparison_table.md` from M4 exactly -- confirms the app and
+   the graded table use one code path, not two that could drift apart.
+2. Uploaded a 200-row slice of the real test set by hand (via
+   `file_uploader[0].set_value(...)`) -- scored correctly.
+3. Uploaded a copy missing the target column -- correctly fell back to the
+   predictions-only view with the expected warning, zero metrics rendered.
+4. Uploaded a copy missing `PAY_0` -- correctly hit `st.error` and stopped
+   before touching the model, zero dataframes rendered.
+   All four runs: zero exceptions.
+5. Also booted the *real* server (`streamlit run app.py --server.headless true`)
+   on a scratch port to catch anything `AppTest`'s bare-mode execution might
+   paper over -- confirmed HTTP 200 on the root page, clean logs, then killed
+   the process by PID.
+
+**Fixed along the way:** `st.dataframe`/`st.pyplot` calls used
+`use_container_width=`, which is deprecated in the installed Streamlit (1.61.1)
+in favour of `width=`. Switched to `width="stretch"`/`"content"` and bumped the
+`requirements.txt` floor from `>=1.40` to `>=1.61` to match, so a fresh install
+(e.g. Streamlit Cloud in M6) can't land on a version that dropped the old
+parameter before this code stopped using it.
+
+**Process note:** no browser-automation tooling (`playwright`, `chromium-cli`)
+is installed in this environment, and the `/run` skill's own guidance was to
+fall back to the closest matching pattern rather than force-install one.
+Streamlit ships `AppTest` specifically for this -- driving real widget
+interactions and catching real exceptions without a browser -- so that was the
+better fit here, not a downgrade from the ideal path.
+
+**Next session — start here**
+**M6.** `.github/workflows/ci.yml`: install deps, run the 17 tests, retrain, and
+assert the metrics table hasn't regressed vs `reports/comparison_table.csv` (a
+tolerance of ~0.005, consistent with the reproducibility check `/train` already
+does by hand). Then deploy `app.py` to Streamlit Community Cloud. Remember the
+still-open, non-blocking item below: consider renaming the GitHub repo before
+connecting it to Streamlit Cloud, since reconnecting after the fact is more
+work than renaming now. Run `/code-review` on the diff and `/security-review`
+before making the repo public, per the ROADMAP.
