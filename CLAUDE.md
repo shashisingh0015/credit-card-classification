@@ -82,6 +82,11 @@ training run and flags suspicious metrics. A PostToolUse hook
 Note `jq` is **not** installed on this machine, so hook payloads are parsed with
 Python rather than the usual `jq` one-liner.
 
+**Hook gotcha:** that hook runs `ruff check --fix`, which deletes imports that are
+unused *at the moment the edit lands*. Adding an import in one edit and its first
+use in a later edit means the import is silently stripped in between, and the next
+run fails with `NameError`. Add imports in the same edit as their first use.
+
 Always invoke `.\.venv\Scripts\python.exe` explicitly — the system `python` has
 none of the ML packages installed.
 

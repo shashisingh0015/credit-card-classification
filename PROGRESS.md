@@ -11,15 +11,17 @@ counterpart to `CLAUDE.md` (which holds only stable facts).
 
 ---
 
-## Where we are — as of 2026-08-15
+## Where we are — as of 2026-08-17
 
-**M0, M1 and M2 are complete, committed and pushed.** Next up is **M3**: add kNN,
-Random Forest and Gradient Boosting to `MODEL_BUILDERS` in `model/models.py`.
+**M0 through M3 are complete.** Next up is **M4**: `model/evaluate.py`, producing
+the six-metric × six-model comparison table as markdown + CSV. That milestone is
+worth 5 of the 15 marks — it is the single largest deliverable in the project.
 
-3 of 6 models are built and scored. Working tree clean, `main` in sync with
-`origin/main`, 4 commits, 28 tracked files, 13/13 tests passing, lint clean.
+**All 6 models are built and scored.** 13/13 tests passing, lint clean.
 
-Best model so far: **Decision Tree**, MCC 0.3893 / AUC 0.7447.
+Best model: **Random Forest**, MCC 0.3972 / AUC 0.7725 — but Gradient Boosting is
+a statistical tie (MCC 0.3958 / AUC 0.7728). See the M3 session notes for why RF is
+still the better pick.
 
 **Getting a working environment** (only `.venv/` and `data/train.csv` are missing
 from a fresh clone — both are reproducible):
@@ -35,11 +37,14 @@ python -m venv .venv
 Everything is seeded (`RANDOM_STATE=42`), so a refit must reproduce these exactly.
 If it does not, something changed — investigate before continuing:
 
-| model | accuracy | AUC | F1 | MCC |
-|---|---|---|---|---|
-| Logistic Regression | 0.8136 | 0.7185 | 0.3749 | 0.3515 |
-| Decision Tree | 0.8188 | 0.7447 | 0.4504 | 0.3893 |
-| Naive Bayes (Gaussian) | 0.5750 | 0.7300 | 0.4430 | 0.2377 |
+| model | accuracy | AUC | F1 | MCC | fit s |
+|---|---|---|---|---|---|
+| Logistic Regression | 0.8136 | 0.7185 | 0.3749 | 0.3515 | 0.15 |
+| Decision Tree | 0.8188 | 0.7447 | 0.4504 | 0.3893 | 0.20 |
+| Naive Bayes (Gaussian) | 0.5750 | 0.7300 | 0.4430 | 0.2377 | 0.03 |
+| k-Nearest Neighbours | 0.8098 | 0.7412 | 0.4390 | 0.3614 | 0.03 |
+| Random Forest | **0.8193** | 0.7725 | 0.4678 | **0.3972** | 1.35 |
+| Gradient Boosting | 0.8186 | **0.7728** | **0.4685** | 0.3958 | 18.39 |
 
 ---
 
@@ -48,7 +53,7 @@ If it does not, something changed — investigate before continuing:
 - [x] **M0 — Foundation & session persistence**
 - [x] **M1 — Data layer & EDA**
 - [x] **M2 — Baselines: Logistic Regression, Decision Tree, Naive Bayes**
-- [ ] **M3 — kNN, Random Forest, Gradient Boosting**
+- [x] **M3 — kNN, Random Forest, Gradient Boosting**
 - [ ] **M4 — Evaluation harness & comparison table**
 - [ ] **M5 — Streamlit app**
 - [ ] **M6 — CI/CD & deployment**
@@ -61,12 +66,10 @@ If it does not, something changed — investigate before continuing:
       `main` tracks `origin/main`; M0 commits pushed.
 - [x] **BITS Virtual Lab access** — user confirmed access and will run the final
       app there to capture the M7 screenshot.
-- [ ] **Open `/hooks` once, or restart Claude Code**, to load the ruff formatting
-      hook added in M2. It is written, pipe-tested against 5 payload shapes and
-      schema-validated, but Claude Code only watches `.claude/` for settings files
-      that existed at session start — and `.claude/settings.json` was created
-      mid-session, so it never loaded. Not a code defect. Verify it works by
-      asking Claude to edit any `.py` file badly and checking that ruff fixes it.
+- [x] **Ruff formatting hook — resolved 2026-08-17.** It loaded on the next session
+      start, exactly as diagnosed, and fired on the first edit to `models.py`
+      (reformatting the `_pipe(...)` calls). Confirmed working; no code change was
+      needed. See Session 4 for the one sharp edge it has.
 - [ ] **Consider renaming the repo** before M6 deploys to Streamlit Cloud. The
       current name says "fraud-classification-beta", but the project is credit-card
       *default* prediction (we dropped the fraud dataset). Renaming after the
@@ -217,3 +220,91 @@ once, or restart Claude Code, and it will load. Not a code defect.
 Forest with many trees can produce large joblib files, and they are committed.
 Concepts to cover: curse of dimensionality (why kNN needs the scaler), and
 bagging (variance reduction) vs boosting (bias reduction).
+
+---
+
+## Session 4 — 2026-08-17 (M3)
+
+**Built**
+- `model/models.py` — three new pipeline factories (`knn`, `random_forest`,
+  `gradient_boosting`) plus registry entries. No other file needed changing:
+  `train.py` iterates `MODEL_BUILDERS`, so adding a model is a one-place edit.
+  That is the payoff from M2's registry design.
+
+**Hyperparameters chosen** (hand-picked, not searched — consistent with the
+existing note in `models.py` that fixed values keep the reasoning attributable to
+the algorithm rather than to a search result):
+- kNN — `n_neighbors=25, weights="distance"`. 25 also buys `predict_proba` a
+  1/25 = 0.04 resolution; at k=5 only six distinct scores exist and the ROC curve
+  degenerates to six points, which would understate AUC for reasons unrelated to
+  the model's quality.
+- Random Forest — `n_estimators=300, max_depth=12, min_samples_leaf=20,
+  max_features="sqrt"`.
+- Gradient Boosting — `n_estimators=200, learning_rate=0.05, max_depth=3,
+  subsample=0.8`.
+
+**Results on the 5,993-row test set** (all-negative baseline = 77.87% accuracy)
+
+| model | accuracy | AUC | F1 | MCC | fit s | artifact |
+|---|---|---|---|---|---|---|
+| k-Nearest Neighbours | 0.8098 | 0.7412 | 0.4390 | 0.3614 | 0.03 | 2,072 KB |
+| Random Forest | **0.8193** | 0.7725 | 0.4678 | **0.3972** | 1.35 | 4,888 KB |
+| Gradient Boosting | 0.8186 | **0.7728** | **0.4685** | 0.3958 | 18.39 | 88 KB |
+
+The first three models reproduced their M2 numbers to four decimal places, which
+is the seeding check working as intended.
+
+**Findings worth carrying into M4**
+
+1. **The two ensembles are a statistical dead heat.** AUC differs by 0.0003 and MCC
+   by 0.0014 on 5,993 rows — far inside noise. Bagging and boosting reach the same
+   ceiling by opposite routes, so the limit here is the signal in the 23 features,
+   not the choice of ensemble. The observations table should say this rather than
+   crowning a winner on the fourth decimal.
+2. **Random Forest is nonetheless the better engineering pick.** 14× faster to fit
+   (1.35s vs 18.39s) *despite* having more and deeper trees (300 × depth 12 vs
+   200 × depth 3) — because its trees are independent and run on all cores, while
+   boosting's are inherently sequential. It is also far more forgiving of
+   `n_estimators`: too many trees costs a forest nothing, but overfits a boosted
+   model. Gradient Boosting wins exactly one column, artifact size (88 KB vs
+   4,888 KB).
+3. **Accuracy separates nothing.** Five of the six models sit in 0.8098–0.8193 — a
+   0.95-point spread — while MCC spans 0.3515–0.3972 and AUC 0.7185–0.7728. Anyone
+   ranking these models by accuracy would call them interchangeable. This is the
+   strongest single argument for the CLAUDE.md rule that MCC and AUC are the
+   headline metrics, and it belongs in the README.
+4. **Ensembles improved ranking much more than classification.** Decision Tree →
+   Random Forest moves MCC only 0.3893 → 0.3972 but AUC 0.7447 → 0.7725. Averaging
+   sharpens the risk *ordering* while few labels actually cross the 0.5 threshold —
+   which points directly at M4's threshold-vs-ranking discussion, and suggests 0.5
+   is the wrong cutoff for a 22% base rate.
+5. **kNN behaved exactly as the theory predicts.** Beats Logistic Regression
+   (MCC 0.3614 vs 0.3515) because a local vote can represent the non-monotonic
+   `PAY_0` structure a single linear coefficient cannot; trails the Decision Tree
+   (0.3893) because a tree finds the `PAY_0 >= 1` threshold directly instead of
+   approximating it through distances in 29 dimensions. Its cost profile inverted as
+   advertised: fastest fit of all six (0.03s — fitting is just storing the array)
+   but a 2 MB artifact against Logistic Regression's 2 KB, a factor of a thousand.
+
+**Process notes**
+- **The ruff hook works** — it loaded at session start and fired on the first edit,
+  reformatting the `_pipe(...)` calls. The M2 diagnosis was right and no fix was
+  needed.
+- **One sharp edge worth knowing:** the hook runs `ruff check --fix`, which deletes
+  imports that are unused *at that instant*. Adding the three sklearn imports before
+  writing the functions that use them meant they were silently stripped, and
+  training then failed with `NameError: KNeighborsClassifier`. Harmless and obvious
+  once seen, but the lesson generalises: with an auto-fixing formatter hook, add
+  imports in the *same* edit as their first use, not ahead of it.
+- Skipped the ROADMAP's planned subagent hyperparameter sweep at the user's
+  direction; values were hand-picked inline instead. The M3 Claude Code topic
+  (subagents) is therefore still unused — M4's skills work is unaffected.
+
+**Next session — start here**
+**M4**, worth 5 of the 15 marks and the largest single deliverable. Build
+`model/evaluate.py` to emit the 6 models × 6 metrics table (accuracy, precision,
+recall, F1, AUC-ROC, MCC) as both markdown and CSV, loading the committed
+artifacts rather than refitting. Note precision and recall are not yet measured
+anywhere — the tables above cover only four of the six required metrics. Then
+author `.claude/skills/model-report/SKILL.md` to regenerate the table and
+observations in a fixed format.
