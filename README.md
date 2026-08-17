@@ -4,8 +4,8 @@ BITS WILP M.Tech (AIML) — Machine Learning Assignment 2. Six classifiers train
 on one shared preprocessing pipeline, compared on six metrics, and served through
 a Streamlit app.
 
-**Live app:** https://credit-default-classification.streamlit.app/
-**Repo:** https://github.com/shashisingh0015/credit-default-classification
+**Live app:** https://credit-card-classification.streamlit.app/
+**Repo:** https://github.com/shashisingh0015/credit-card-classification
 
 ---
 
@@ -74,7 +74,7 @@ user uploads.
 
 ## c. GitHub repository
 
-**https://github.com/shashisingh0015/credit-default-classification**
+**https://github.com/shashisingh0015/credit-card-classification**
 
 ```
 app.py                 # Streamlit app — upload, model dropdown, metrics, confusion matrix

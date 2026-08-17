@@ -40,7 +40,7 @@ CSV_PATH = REPORT_DIR / "comparison_table.csv"
 # Column order doubles as report column order. Accuracy first because a reader
 # expects it there, then precision/recall/f1 (the threshold-dependent family, in
 # the order that builds up to F1), then the two ranking/reliability metrics this
-# project treats as headline numbers -- see CLAUDE.md.
+# project treats as headline numbers.
 METRIC_COLUMNS = ["accuracy", "precision", "recall", "f1", "auc", "mcc"]
 
 

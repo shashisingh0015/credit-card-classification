@@ -199,7 +199,7 @@ if has_target:
     st.caption(
         f"All-negative baseline on this file: {baseline:.2%} accuracy. "
         "MCC and AUC are the metrics to trust here -- accuracy alone can look "
-        "high while the model has learned nothing (see CLAUDE.md)."
+        "high while the model has learned nothing."
     )
     cols = st.columns(len(METRIC_COLUMNS))
     for col, metric in zip(cols, METRIC_COLUMNS):
